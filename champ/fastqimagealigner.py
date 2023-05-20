@@ -108,7 +108,18 @@ class FastqImageAligner(object):
         self.fq_im_scaled_maxes = self.fq_im_scale * np.array([x_max-x_min, y_max-y_min])
         self.fq_im_scaled_dims = (self.fq_im_scaled_maxes + [1, 1]).astype(np.int)
 
-    def find_hitting_tiles(self, possible_tile_keys, snr_thresh=1.2):
+    def find_hitting_tiles(self, side1, possible_tile_keys, snr_thresh=1.2):
+        
+        if side1:
+            log.debug("Align to floor layer")
+            floor_possible_tile_keys = [possible_tiles[:9]+"1"+possible_tiles[10:] for possible_tiles in possible_tile_keys]
+            possible_tiles = [self.fastq_tiles[key] for key in floor_possible_tile_keys
+                              if key in self.fastq_tiles]
+        else:
+            log.debug("Align to ceiling layer")
+            possible_tiles = [self.fastq_tiles[key] for key in possible_tile_keys
+                              if key in self.fastq_tiles]
+            
         possible_tiles = [self.fastq_tiles[key] for key in possible_tile_keys
                           if key in self.fastq_tiles]
         impossible_tiles = [tile for tile in self.fastq_tiles.values() if tile not in possible_tiles]
@@ -311,13 +322,13 @@ class FastqImageAligner(object):
                 tile.set_snr_with_control_corr(self.control_corr)
         return found_good_mapping
 
-    def rough_align(self, possible_tile_keys, rotation_est, fq_w_est=927, snr_thresh=1.2):
+    def rough_align(self, side1, possible_tile_keys, rotation_est, fq_w_est=927, snr_thresh=1.2):
         self.fq_w = fq_w_est
         self.set_fastq_tile_mappings()
         self.set_all_fastq_image_data()
         self.rotate_all_fastq_data(rotation_est)
         start_time = time.time()
-        self.find_hitting_tiles(possible_tile_keys, snr_thresh)
+        self.find_hitting_tiles(side1, possible_tile_keys, snr_thresh)
         log.debug('Rough alignment time: %.3f seconds' % (time.time() - start_time))
 
     def precision_align_only(self, min_hits):

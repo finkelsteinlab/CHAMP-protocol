@@ -58,7 +58,7 @@ def main(clargs):
     log.debug("FastQImageAligner loaded.")
 
     if 'end_tiles' not in cache:
-        end_tiles = align.get_end_tiles(cluster_strategies, clargs.rotation_adjustment, h5_filenames, metadata['alignment_channel'], clargs.snr, metadata, sequencing_chip, fia)
+        end_tiles = align.get_end_tiles(cluster_strategies, clargs.rotation_adjustment, h5_filenames, metadata['alignment_channel'], clargs.snr, metadata, sequencing_chip, fia, clargs.side1)
         cache['end_tiles'] = end_tiles
         initialize.save_cache(clargs.image_directory, cache)
     else:
@@ -69,7 +69,7 @@ def main(clargs):
     if not cache['phix_aligned']:
         for cluster_strategy in cluster_strategies:
             align.run(cluster_strategy, clargs.rotation_adjustment, h5_filenames, path_info, clargs.snr, clargs.min_hits, fia, end_tiles, metadata['alignment_channel'],
-                      all_tile_data, metadata, clargs.make_pdfs, sequencing_chip, clargs.process_limit)
+                      all_tile_data, metadata, clargs.make_pdfs, sequencing_chip, clargs.process_limit, clargs.side1)
             cache['phix_aligned'] = True
             initialize.save_cache(clargs.image_directory, cache)
         else:

@@ -157,6 +157,10 @@ class CommandLineArguments(object):
     @property
     def target_sequence_file(self):
         return self._arguments['--target-sequence-file'] or False
+    
+    @property
+    def side1(self):
+        return self._arguments['--side1'] or False
 
 
 class PathInfo(object):
