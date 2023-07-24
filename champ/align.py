@@ -49,6 +49,7 @@ def run_data_channel(cluster_strategy, h5_filenames, channel_name, path_info, al
         num_processes = min(process_limit, num_processes)
     log.debug("Aligning data images with %d cores with chunksize %d" % (num_processes, chunksize))
 
+    # Here we load only the phiX reads to FASTQ Image Aligner
     log.debug("Loading reads into FASTQ Image Aligner.")
     fastq_image_aligner = fastqimagealigner.FastqImageAligner(metadata['microns_per_pixel'])
     fastq_image_aligner.load_reads(alignment_tile_data)
@@ -121,8 +122,16 @@ def make_output_directories(h5_filenames, path_info):
 
 
 def get_end_tiles(cluster_strategies, rotation_adjustment, h5_filenames, alignment_channel, snr, metadata, sequencing_chip, fia, side1):
+
+    # -----------------------------------
+    # To reduce the time for alignment, champ program strategically find the image boundary in the FASTQ space by aligning the first image to the tiles #2101 to # 2109,
+    # and the last image to the tiles # 2110 to # 2119 by rough alignment process. Only if both boundaries are found, champ will proceed with precision alignment.
+    # Otherwise, the alignment will fail.
+    # -----------------------------------
+
     right_end_tiles = {}
     left_end_tiles = {}
+    # For rough alignment, we use ".se" strategy from source extractor then ".otsu" from Otsu's method
     for cluster_strategy in cluster_strategies:
         with h5py.File(h5_filenames[0]) as first_file:
             grid = GridImages(first_file, alignment_channel)
@@ -130,6 +139,7 @@ def get_end_tiles(cluster_strategies, rotation_adjustment, h5_filenames, alignme
             num_processes = len(h5_filenames)
             pool = multiprocessing.Pool(num_processes)
             base_column_checker = functools.partial(check_column_for_alignment, cluster_strategy, rotation_adjustment, alignment_channel, snr, sequencing_chip, metadata['microns_per_pixel'], fia, int(side1))
+            # Retrieve the left and right end tiles information
             left_end_tiles = dict(find_bounds(pool, h5_filenames, base_column_checker, grid.columns, sequencing_chip.left_side_tiles))
             right_end_tiles = dict(find_bounds(pool, h5_filenames, base_column_checker, reversed(grid.columns), sequencing_chip.right_side_tiles))
             pool.close()
