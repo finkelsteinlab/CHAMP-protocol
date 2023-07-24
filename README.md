@@ -116,3 +116,9 @@ found that 1.4 to be ideal under most scenarios.
 Analyses of sequence specificity are performed using the Jupyter notebooks provided in the `notebooks` directory. The 
 intended workflow is to copy them from this repo into each new experiment directory, edit the few variables as needed
 at the top of each notebook, and run them.
+
+
+#### Docker repository
+
+To migrate CHAMP program into different working environment (e.g., CentOS computer cluster), we created a docker image container having all necessary files to execute CHAMP program in a Ubuntu 18.04 environment. Users can find the docker image file at yakuo0602/tacc-ubuntu18-champ-ncb:v12, or simply download the docker image after installing Apptainer with command,
+` apptainer pull docker://yakuo0602/tacc-ubuntu18-champ-ncb:v12
