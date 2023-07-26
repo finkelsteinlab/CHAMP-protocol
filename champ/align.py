@@ -99,6 +99,7 @@ def perform_alignment(cluster_strategy, rotation_adjustment, path_info, snr, min
             try:
                 fia.precision_align_only(min_hits=min_hits)
             except ValueError:
+            # If the 'exclusive hits' + 'good-mutual hits' smaller than the user-defined threshold (i.e., '--min-hits'), it is not considered as a successful alignment.
                 log.debug("Too few hits to perform precision alignment. Image: %s Row: %d Column: %d " % (base_name, image.row, image.column))
             else:
                 result = write_output(stats_file_path, image.index, base_name, fia, path_info, all_tile_data, make_pdfs, um_per_pixel)
@@ -131,7 +132,7 @@ def get_end_tiles(cluster_strategies, rotation_adjustment, h5_filenames, alignme
 
     right_end_tiles = {}
     left_end_tiles = {}
-    # For rough alignment, we use ".se" strategy from source extractor then ".otsu" from Otsu's method
+    # For rough alignment, we first try ".se" strategy from source extractor. If it .se strategy fails, champ then try with ".otsu" from Otsu's method.
     for cluster_strategy in cluster_strategies:
         with h5py.File(h5_filenames[0]) as first_file:
             grid = GridImages(first_file, alignment_channel)
@@ -146,6 +147,7 @@ def get_end_tiles(cluster_strategies, rotation_adjustment, h5_filenames, alignme
             pool.join()
             if left_end_tiles and right_end_tiles:
                 break
+    # There are several parameters affecting the alignment outcomes, such as rotation angle, pixel size, flipping, and ports position. It could also be possible that the acquired images only cover part of either end tiles.
     if not left_end_tiles or not right_end_tiles:
         error.fail("End tiles could not be found! Try adjusting the rotation or look at the raw images.")
     default_left_tile, default_left_column = decide_default_tiles_and_columns(left_end_tiles)
@@ -343,6 +345,7 @@ def process_alignment_image(cluster_strategy, rotation_adjustment, snr, sequenci
     if not os.path.exists(sexcat_fpath):
         return fia
     fia.set_sexcat_from_file(sexcat_fpath, cluster_strategy)
+    # Execute the rough alignment method in the FastqImageAligner.py
     fia.rough_align(side1,
                     possible_tile_keys,
                     sequencing_chip.rotation_estimate + rotation_adjustment,
