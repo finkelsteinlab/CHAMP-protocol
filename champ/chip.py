@@ -1,6 +1,7 @@
 from collections import defaultdict
 import itertools
 
+# This file contains the chip-related information
 
 class BaseChip(object):
     def __init__(self, tile_count):
@@ -53,6 +54,7 @@ class Miseq(BaseChip):
     def __init__(self, ports_on_right, side=2):
         # ports_on_right means that when imaging, the two fluid inlet ports are towards the right, at least on side 2
         super(Miseq, self).__init__(19)
+        # The following defines the lower tile range and higher tile range. These two ranges are useful when champ try to find the boundary of the images during rough alignment.
         self._lower_tiles = [self._format_tile_number(int("%d100" % side) + num) for num in range(1, 11)]
         self._higher_tiles = [self._format_tile_number(int("%d100" % side) + num) for num in reversed(range(11, 20))]
         self._ports_on_right = ports_on_right
