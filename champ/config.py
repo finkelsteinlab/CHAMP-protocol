@@ -2,6 +2,7 @@ import logging
 import os
 from chip import load
 
+# This file contains information about commands and the user-defined inputs. If users want to add new arguments in the future, they should also be defined here.
 
 class CommandLineArguments(object):
     """
