@@ -37,6 +37,7 @@ class FastqImageAligner(object):
 
     def load_reads(self, tile_data, valid_keys=None):
         # Here we load phiX reads from the mapping result files.
+        # We would like to organize the reads by their tiles. 
         for tile_key, read_names in tile_data.items():
             if valid_keys is None or tile_key in valid_keys:
                 self.fastq_tiles[tile_key] = FastqTileRCs(tile_key, read_names, self.microns_per_pixel)
