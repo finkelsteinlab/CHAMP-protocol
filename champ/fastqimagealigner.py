@@ -13,6 +13,14 @@ log = logging.getLogger(__name__)
 
 class FastqImageAligner(object):
     """A class to find the alignment of fastq data and image data."""
+    ### --------------------------------
+    # This class contains information about how the TIFF images are aligned and how champ process the images.
+    # In brief, the TIFF images are first converted to Fourier space and compute cross-correlation values with the phiX coordinates-coverted Fourier graph to register their position.
+    # The method described above is called "rough alignment".
+    # Upon finding the optimal position of the TIFF images, the champ program then perform "precision alignment" by computing the nearest neighbors of a TIFF cluster-phiX pair.
+    # This can be achieved by introducing the centroid of each cluster in real space based on source-extractor results.
+    # After precision alignment, the program then performs least-square mapping to find the optimal parameters (e.g., rotation angle, scaling) for each image.
+    ### --------------------------------
     def __init__(self, microns_per_pixel):
         self.fastq_tiles = {}
         self.fastq_tiles_keys = []
@@ -28,6 +36,7 @@ class FastqImageAligner(object):
         self.hitting_tiles = []
 
     def load_reads(self, tile_data, valid_keys=None):
+        # Here we load phiX reads from the mapping result files.
         for tile_key, read_names in tile_data.items():
             if valid_keys is None or tile_key in valid_keys:
                 self.fastq_tiles[tile_key] = FastqTileRCs(tile_key, read_names, self.microns_per_pixel)
