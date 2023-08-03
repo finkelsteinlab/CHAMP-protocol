@@ -14,6 +14,7 @@ def load_channel_names(tifs):
     channels = set()
     for filename in tifs:
         tif = tifffile.TiffFile(filename)
+        # Channel name is embedded in the MicroManager settings during image acquisition.
         raw_channel_names = tif.micromanager_metadata['summary']['ChNames']
         if type(raw_channel_names) in (str, unicode):
             channel_names = [raw_channel_names]
@@ -49,6 +50,7 @@ def get_all_tif_paths(root_directory):
 
 
 def main(paths, flipud, fliplr, min_column, max_column):
+    # This step manipulates the image based on user-defined parameters, and create a .h5 file in the end.
     image_adjustments = []
     if flipud:
         image_adjustments.append(lambda x: np.flipud(x))
