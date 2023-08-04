@@ -247,11 +247,11 @@ class FastqImageAligner(object):
         # (4) good_mutual_hits: If A and B are mutual_hits but not exclusive, which means that there is either C or D, or both, consider A or B as the closest neighbor. However, the distance between the other candidate is longer than the threshold. Then A and B belong to this category.
         # (5) bad_mutual_hits: If A and B are mutual_hits but not exclusive, neither good mutual. 
         ### --------------------------------------------------------------------------------
-        mutual_hits = cluster_to_aligned_indexes & aligned_to_cluster_indexs_rev
-        non_mutual_hits = cluster_to_aligned_indexes ^ aligned_to_cluster_indexs_rev
+        mutual_hits = cluster_to_aligned_indexes & aligned_to_cluster_indexs_rev # Find the common closest neighbor pairs between the two groups.
+        non_mutual_hits = cluster_to_aligned_indexes ^ aligned_to_cluster_indexs_rev # Find the different closest neighbor pairs.
 
-        cluster_in_non_mutual = set(i for i, j in non_mutual_hits)
-        aligned_in_non_mutual = set(j for i, j in non_mutual_hits)
+        cluster_in_non_mutual = set(i for i, j in non_mutual_hits) # Identify the TIFF clusters having more than one closest neighbor by FASTQ reads.
+        aligned_in_non_mutual = set(j for i, j in non_mutual_hits) # Identify the FASTQ reads having more than one closest neighbor by TIFF clusters.
         exclusive_hits = set((i, j) for i, j in mutual_hits if i not in
                              cluster_in_non_mutual and j not in aligned_in_non_mutual)
 
