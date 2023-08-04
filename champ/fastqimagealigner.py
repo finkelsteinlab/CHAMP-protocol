@@ -240,7 +240,12 @@ class FastqImageAligner(object):
             aligned_to_cluster_indexs_rev.add((idx, i))
 
         ### --------------------------------------------------------------------------------
-        # Here we categorize hits into different groups. 
+        # Here we categorize hits into different groups. For the precision alignment to success, the number of exclusive_hits + good_mutual_hits should pass the user-defined threshold (i.e., --min-hits).
+        # (1) mutual_hits: represents all the hits pair which FASTQ point A considers TIFF cluster B as the closest neighbor, and vice versa.
+        # (2) non_mutual_hits: If any of the closest-neighbor relation above is not valid, then A and B are considered in this group.
+        # (3) exclusive_hits: If A and B are mutual_hits while no other FASTQ point C consider B as the closest neighbor, neither TIFF cluster D considers A as the closest neighbor.
+        # (4) good_mutual_hits: If A and B are mutual_hits but not exclusive, which means that there is either C or D, or both, consider A or B as the closest neighbor. However, the distance between the other candidate is longer than the threshold. Then A and B belong to this category.
+        # (5) bad_mutual_hits: If A and B are mutual_hits but not exclusive, neither good mutual. 
         ### --------------------------------------------------------------------------------
         mutual_hits = cluster_to_aligned_indexes & aligned_to_cluster_indexs_rev
         non_mutual_hits = cluster_to_aligned_indexes ^ aligned_to_cluster_indexs_rev
