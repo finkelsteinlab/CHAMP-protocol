@@ -177,10 +177,15 @@ class FastqImageAligner(object):
                 self.hitting_tiles.append(tile)
 
     def find_points_in_frame(self, consider_tiles='all'):
+        ### ----------------------
+        # Here we estimate all phiX FASTQ reads within the FOV. It is computed after the rough alignment and will be used during the precision alignment stage.
+        # To estimate the points within the FOV, we first compute the X, Y coordinates of each read after transformation (i.e., scaling, rotation, etc.)
+        # If the X, Y coordiantes of a read fall within the FOV size, we consider it as a aligned_rcs_in_frame.
+        ### ----------------------
         self.rcs_in_frame = []
         aligned_rcs_in_frame = []
         im_shape = self.image_data.image.shape
-
+        # Consider tiles are the tiles pass the SNR criteria.
         if consider_tiles == 'all':
             considered_tiles = self.hitting_tiles
         else:
@@ -195,12 +200,15 @@ class FastqImageAligner(object):
         self.aligned_rcs_in_frame = np.array(aligned_rcs_in_frame)
 
     def hit_dists(self, hits):
+        # Here we estimate the euclidean distance between two points.
         return [self.single_hit_dist(hit) for hit in hits]
 
     def single_hit_dist(self, hit):
+        # This method is called when we want to estimate two points distance during the precision alignment stage. One in FASTQ space and one in TIFF space.
         return np.linalg.norm(self.clusters.point_rcs[hit[0]] - self.aligned_rcs_in_frame[hit[1]])
 
     def remove_longest_hits(self, hits, pct_thresh):
+        # To be more conservative, we consider the points if distance between the closest neighbor is within the 90-percentile of all closest neighbors set.
         if not hits:
             return []
         dists = self.hit_dists(hits)
