@@ -216,9 +216,12 @@ class FastqImageAligner(object):
         return [hit for hit in hits if self.single_hit_dist(hit) <= thresh]
 
     def find_hits(self, consider_tiles='all'):
-        # --------------------------------------------------------------------------------
-        # Find nearest neighbors
-        # --------------------------------------------------------------------------------
+        ### --------------------------------------------------------------------------------
+        # To find nearest neighbors, we use the KD Tree in both FASTQ space and TIFF space.
+        # It is useful when we want to fine-tune the alignment parameters and find the most probable sequence to register a cluster.
+        # The cluster_tree is the tree for TIFF clusters. It is built based on source-extractor identified centroids.
+        # The aligned_tree is the tree for FASTQ coordinates. We only consider the FASTQ reads within the FOV.
+        ### --------------------------------------------------------------------------------
         self.find_points_in_frame(consider_tiles)
         cluster_tree = KDTree(self.clusters.point_rcs)
         aligned_tree = KDTree(self.aligned_rcs_in_frame)
@@ -226,17 +229,19 @@ class FastqImageAligner(object):
         # All indices are in the order (cluster_index, aligned_in_frame_idx)
         cluster_to_aligned_indexes = set()
         for i, pt in enumerate(self.clusters.point_rcs):
+            # Providing the TIFF cluster centroids, we want to know what is the closest FASTQ reads in the FASTQ space.
             dist, idx = aligned_tree.query(pt)
             cluster_to_aligned_indexes.add((i, idx))
 
         aligned_to_cluster_indexs_rev = set()
         for i, pt in enumerate(self.aligned_rcs_in_frame):
+            # In contrast, providing the FASTQ read coordinates, we want to know what is the closest TIFF cluster centroid in the TIFF space.
             dist, idx = cluster_tree.query(pt)
             aligned_to_cluster_indexs_rev.add((idx, i))
 
-        # --------------------------------------------------------------------------------
-        # Find categories of hits
-        # --------------------------------------------------------------------------------
+        ### --------------------------------------------------------------------------------
+        # Here we categorize hits into different groups. 
+        ### --------------------------------------------------------------------------------
         mutual_hits = cluster_to_aligned_indexes & aligned_to_cluster_indexs_rev
         non_mutual_hits = cluster_to_aligned_indexes ^ aligned_to_cluster_indexs_rev
 
