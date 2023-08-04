@@ -105,6 +105,10 @@ class FastqImageAligner(object):
 
     def set_fastq_tile_mappings(self):
         """Calculate parameters for mapping fastq tiles for ffts."""
+        ### ---------------------
+        # Here we use the minimum and maximum values of FASTQ coordinate to estimate the scaling factor between Illumina sequencer and our own microscope.
+        # We also compute the scaled dimensions based on our scaling estimation.
+        ### ---------------------
         assert self.image_data is not None, 'No image data loaded.'
         assert self.fastq_tiles != {}, 'No fastq data loaded.'
 
@@ -114,37 +118,58 @@ class FastqImageAligner(object):
         x_max, y_max = all_data.max(axis=0)
 
         self.fq_im_offset = np.array([-x_min, -y_min])
+        # The scaling factor to transform from FASTQ coordinate system to microscope imaging coordinate system is computed by,
+        # FASTQ_tile_width (unit: um) / (x_maximum - x_minimum) (unit: Illumina coordinate units) / pixel_size (unit: um/px) = px / Illumina coordinate units
         self.fq_im_scale = (float(self.fq_w) / (x_max-x_min)) / self.image_data.um_per_pixel
         self.fq_im_scaled_maxes = self.fq_im_scale * np.array([x_max-x_min, y_max-y_min])
         self.fq_im_scaled_dims = (self.fq_im_scaled_maxes + [1, 1]).astype(np.int)
 
     def find_hitting_tiles(self, side1, possible_tile_keys, snr_thresh=1.2):
-        
+        # Here we include the "side1" argument to align phiX images to the tiles with tile number starting with "1"
+        # To reduce the computational workload, in the original CHAMP program published in the Cell paper by Jung et al., the program can only align to the tiles starting with "2". 
         if side1:
-            log.debug("Align to floor layer")
+            log.debug("Align to side 1")
+            # Define the side1 tile range
             floor_possible_tile_keys = [possible_tiles[:9]+"1"+possible_tiles[10:] for possible_tiles in possible_tile_keys]
             possible_tiles = [self.fastq_tiles[key] for key in floor_possible_tile_keys
                               if key in self.fastq_tiles]
         else:
-            log.debug("Align to ceiling layer")
+            log.debug("Align to side 2")
             possible_tiles = [self.fastq_tiles[key] for key in possible_tile_keys
                               if key in self.fastq_tiles]
             
         possible_tiles = [self.fastq_tiles[key] for key in possible_tile_keys
                           if key in self.fastq_tiles]
+        ### ----------------------
+        # For the rough alignment, possible tiles are the half of the chip range.
+        # The impossible tiles are simply the other half of the chip range. It is useful when computing the control alignment noise.
+        ### ----------------------
         impossible_tiles = [tile for tile in self.fastq_tiles.values() if tile not in possible_tiles]
         impossible_tiles.sort(key=lambda tile: -len(tile.read_names))
+        # Two control tiles having more reads are selected.
         control_tiles = impossible_tiles[:2]
+        # To compute the cross-correlation between FASTQ and the TIFF image, the program perform FFT on TIFF images.
         self.image_data.set_fft(self.fq_im_scaled_dims)
         self.control_corr = 0
 
         for control_tile in control_tiles:
+            ### ----------------------
+            # Here we perform FFT of control tiles and compute the cross-correlation value between TIFF images and the FASTQ tiles after FFT.
+            # The maximum correlation value is set as a control_corr. This serves as a "noise" level for the alignment.
+            # The "fft_align_with_im" method is in "fastqtilercs.py"
+            ### ----------------------
             corr, _ = control_tile.fft_align_with_im(self.image_data)
             if corr > self.control_corr:
                 self.control_corr = corr
         del control_tiles
         self.hitting_tiles = []
         for tile in possible_tiles:
+            ### ----------------------
+            # Here we compute the cross-correlation values between TIFF images and possible tiles after FFT to serve as a "signal".
+            # The maximum correlation value is set as "max_corr". The user-defined SNR is serve as a criteria to evaluate if the alignment is success or not.
+            # If the max_corr passes the product of SNR and the control_corr, then it is considered as a successful rough alignment.
+            # The tile number will then be documented as a hitting tile.
+            ### ----------------------
             max_corr, align_tr = tile.fft_align_with_im(self.image_data)
             if max_corr > snr_thresh * self.control_corr:
                 tile.set_aligned_rcs(align_tr)
