@@ -267,10 +267,17 @@ class FastqImageAligner(object):
         else:
             good_hit_threshold = np.percentile(self.hit_dists(exclusive_hits), 95)
         second_neighbor_thresh = 2 * good_hit_threshold
-
+        # To be more conservative, we limit the hits that can be classified as a exclusive_hits by considering only the hit pair closer than the good_hit_threshold.
         exclusive_hits = set(hit for hit in exclusive_hits
                              if self.single_hit_dist(hit) <= good_hit_threshold)
-
+        
+        # --------------------------------------------------------------------------------
+        # Here we would like to classify the hits to be good_mutual_hits.
+        # We achieve this by comparing the third candidate C to either target hit pair A or B to the second_neighbor_thresh. 
+        # We first consider the hits that are closer than good_hit_threshold as possible good_mutual_hits.
+        # Next, take C and A as a candidate pair as an example. If the distance between A and C is longer than the second_neighbor_thresh, then A and B can be consider as good_mutual_hits.
+        # In contrast, if the distance between C and A is closer than second_neighbor_thresh, A and B will not be consider as good_mutual_hits.
+        # --------------------------------------------------------------------------------
         good_mutual_hits = set()
         for i, j in (mutual_hits - exclusive_hits):
             if self.hit_dists([(i, j)])[0] > good_hit_threshold:
@@ -278,6 +285,7 @@ class FastqImageAligner(object):
             third_wheels = [tup for tup in non_mutual_hits if i == tup[0] or j == tup[1]]
             if min(self.hit_dists(third_wheels)) > second_neighbor_thresh:
                 good_mutual_hits.add((i, j))
+        # For all other mutual hit pairs that are not exclusive_hits neither good_mutual_hits, they will be classified as bad_mutual_hits.
         bad_mutual_hits = mutual_hits - exclusive_hits - good_mutual_hits
 
         # --------------------------------------------------------------------------------
