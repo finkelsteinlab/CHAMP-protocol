@@ -356,19 +356,25 @@ class FastqImageAligner(object):
         for tile in self.hitting_tiles:
             self.find_hits(consider_tiles=tile)
             # Reminder: All indices are in the order (cluster_index, in_frame_idx)
+            # We only consider exclusive and good_mutual hits to perform least-square mapping.
             raw_hits = get_hits(('exclusive', 'good_mutual'))
+            # Remove hit pairs if their distance is longer than preset percentage.
             hits = self.remove_longest_hits(raw_hits, pct_thresh)
+            # If the number of hits is smaller than the user-defined threshold, skip this tile.
             if len(hits) < min_hits:
                 continue
             else:
+            # If the number of hits is larger than the user-defined threshold, consider this tile.
                 found_good_mapping = True
             A = np.zeros((2 * len(hits), 4))
             b = np.zeros((2 * len(hits),))
             for i, (cluster_index, in_frame_idx) in enumerate(hits):
+                # Extract the adjusted TIFF cluster x, y coordinates in the FOV.
                 tile_key, (xir, yir) = self.rcs_in_frame[in_frame_idx]
                 A[2*i, :] = [xir, -yir, 1, 0]
                 A[2*i+1, :] = [yir,  xir, 0, 1]
-
+                
+                # Extract the adjusted phiX x, y coordinates in the FOV.
                 xis, yis = self.clusters.point_rcs[cluster_index]
                 b[2*i] = xis
                 b[2*i+1] = yis
@@ -397,6 +403,7 @@ class FastqImageAligner(object):
         if not self.hitting_tiles:
             raise RuntimeError('Alignment not found')
         found_good_mapping = self.least_squares_mapping(min_hits=min_hits)
+        # If the number of exclusive + good_mutual hits are smaller than the user-defined threshold, the precision alignment will be considered failed.
         if not found_good_mapping:
             raise ValueError("Could not precision align!")
         log.debug('Precision alignment time: %.3f seconds' % (time.time() - start_time))
@@ -405,6 +412,7 @@ class FastqImageAligner(object):
         log.debug('Hit finding time: %.3f seconds' % (time.time() - start_time))
 
     @property
+    # Document the number of all different hits which will be written into a text file.
     def alignment_stats(self):
         hits = {'exclusive': len(self.exclusive_hits),
                 'good_mutual': len(self.good_mutual_hits),
