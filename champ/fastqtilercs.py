@@ -20,7 +20,7 @@ class FastqTileRCs(object):
         self.scale = scale
         self.image_shape = scaled_dims
         self.width = width  # width in um
-        self.mapped_rcs = scale * (self.rcs + np.tile(offset, (self.rcs.shape[0], 1)))
+        self.mapped_rcs = scale * (self.rcs + np.tile(offset, (self.rcs.shape[0], 1))) # Adjust the rcs coordinates according to microscope config.
         self.rotation_degrees = 0
 
     def rotate_data(self, degrees):
@@ -30,6 +30,7 @@ class FastqTileRCs(object):
         self.image_shape = self.mapped_rcs.max(axis=0) + 1
         return self.image_shape
 
+    # Perform Gaussian blur into phiX cluster to create a pseudo image. The standard deviation of the Gaussian curve is determined by the microscope cofig.
     def image(self):
         image = np.zeros(self.image_shape.astype(np.int))
         image[self.mapped_rcs.astype(np.int)[:, 0], self.mapped_rcs.astype(np.int)[:, 1]] = 1
@@ -37,6 +38,7 @@ class FastqTileRCs(object):
         image = ndimage.gaussian_filter(image, sigma)
         return image
 
+    # Perform FFT to the pseudo phiX images and compute the cross-correlation between FFT phiX image and the FFT TIFF image. 
     def fft_align_with_im(self, image_data):
         # Make the ffts
         fq_image = self.image()
