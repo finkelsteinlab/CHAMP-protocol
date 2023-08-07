@@ -19,10 +19,11 @@ class ImageData(object):
         self.image /= float(med)
         self.image -= 1.0
 
+    # Perform FFT on the TIFF images. Since the cross-correlation computation is more efficient when matrices size is power of 2. We pad constant 0 to the original TIFF image to fulfill this requirement. 
     def set_fft(self, padding):
         totalx, totaly = np.array(padding) + np.array(self.image.shape)
         dimension = int(max(misc.next_power_of_2(totalx),
-                        misc.next_power_of_2(totaly)))
+                        misc.next_power_of_2(totaly))) # Call the "next_power_of_2" method in the misc.py file to calculate the dimension needed to fit in the TIFF images.
         padded_im = np.pad(self.image,
                            ((int(padding[0]), dimension - int(totalx)), (int(padding[1]), dimension - int(totaly))),
                            mode='constant')
