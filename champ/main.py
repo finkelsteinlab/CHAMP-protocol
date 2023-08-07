@@ -41,7 +41,7 @@ def main(**kwargs):
     log.addHandler(handler)
     log.setLevel(arguments.log_level)
     log.debug(docopt_args)
-
+    # Document all available commands for the champ program. If users want to incorporate new command, this part has to be updated accordingly.
     commands = {'align': align,
                 'init': initialize,
                 'h5': h5,
