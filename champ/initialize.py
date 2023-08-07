@@ -6,7 +6,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-
+# Document metadata in champ.yml based on user inputs.
 def save_metadata(clargs, alignment_channel):
     filename = os.path.join(clargs.image_directory, 'champ.yml')
     with open(filename, 'w') as f:
@@ -25,13 +25,13 @@ def save_metadata(clargs, alignment_channel):
                 }
         yaml.dump(data, f)
 
-
+# The cache file records possible tiles and some parameters during the alignment.
 def save_cache(image_directory, cache):
     filename = os.path.join(image_directory, 'cache.yml')
     with open(filename, 'w') as f:
         yaml.dump(cache, f)
 
-
+# champ h5 command can only be processed if the image file has been initialized. If not, it will pop up this error message.
 def load_metadata(image_directory):
     filename = get_existing_metadata_filename(image_directory)
     try:
