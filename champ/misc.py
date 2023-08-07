@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.neighbors import KernelDensity
 from scipy.optimize import minimize
 
-
+# Compute the next_power_of_2 when transforming phiX images and TIFF images into Fourier space.
 def next_power_of_2(x):
     return 1 << (int(np.ceil(x))-1).bit_length()
 
@@ -14,7 +14,7 @@ def next_power_of_2(x):
 def max_2d_idx(a):
     return np.unravel_index(a.argmax(), a.shape)
 
-
+# Padding 0s so that the image size can be power of 2.
 def pad_to_size(M, size):
     assert len(size) == 2, 'Row and column sizes needed.'
     left_to_pad = size - np.array(M.shape)
