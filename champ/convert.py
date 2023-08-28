@@ -58,10 +58,13 @@ def main(paths, flipud, fliplr, min_column, max_column):
         image_adjustments.append(lambda x: np.fliplr(x))
 
     for directory, tifs in paths.items():
-        hdf5_filename = directory + ".h5"
-        if os.path.exists(hdf5_filename):
-            log.warn("HDF5 file already exists, skipping creation: %s" % hdf5_filename)
-            continue
+        hdf5_filename = directory + "images.h5" # This will create a "images.h5" file under images folder
+        
+        # Comment out the following lines so that a new images.h5 file can be created no matter what.
+        #if os.path.exists(hdf5_filename):
+        #    log.warn("HDF5 file already exists, skipping creation: %s" % hdf5_filename)
+        #    continue
+        
         with h5py.File(hdf5_filename, 'a') as h5:
             tiff_stack = load_tiff_stack(list(tifs), image_adjustments, min_column, max_column)
             for t in tiff_stack:
