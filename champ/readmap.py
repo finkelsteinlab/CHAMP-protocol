@@ -189,7 +189,14 @@ def get_max_edit_dist(target):
 def rand_seq(seq_len):
     return ''.join(random.choice('ACGT') for _ in xrange(seq_len))
 
-
+### -----------------------------------------------
+# Here we also consider sequences having similar reads to our target.
+# If the fastq reads are longer than our target_sequence, we consider all possible edit distance by comparing the edit distance between target_seq and fastq reads having the same length.
+# This process is repeated by frame-shifting a sequence window having length equals target_seq in fastq reads from the beginning to its end.
+# The minimum edit distance is the minimum value among all edit distance.
+# In contrast, if the fastq reads are smaller than the target_seq, we directly compute the edit distance between target_seq and fastq reads. This serves as a penlty to compensate the length differences.
+# After min_edit_dist is calculated, we compare it with max_edit_dist. If min_edit_dist <= max_edit_dist, we will accept this read as it could be related to our target_seq.
+### -----------------------------------------------
 def determine_target_reads(targets, read_names_given_seq):
     for target_name, target_sequence in targets.items():
         max_edit_dist = get_max_edit_dist(target_sequence)
@@ -224,7 +231,7 @@ def write_all_read_names(fastq_files, out_file_path, usable_read):
             for record in filter(lambda record: usable_read(record.id), parse_fastq_lines(second)):
                 out.write(record.name + '\n')
 
-
+# If a target sequence is identical to the sequence listed in the fastq reads, it is considered as a perfect_read_names 
 def determine_perfect_target_reads(targets, read_names_by_seq):
     for target_name, target_sequence in targets.items():
         perfect_read_names = []
@@ -234,7 +241,6 @@ def determine_perfect_target_reads(targets, read_names_by_seq):
         yield target_name, perfect_read_names
 
 ### ---------------------------
- 
 # In this method, we try to determine the maximum possible hamming distance of each reads.
 # To achieve this, we create two random sequences (i.e., ref_seq and new_seq) having length equals to max_len.
 # We compare the hamming distance between these two sequences from min_len to 3' end, so that we can understand the effect of the sequence length to its possible numbers of errors.
@@ -242,8 +248,6 @@ def determine_perfect_target_reads(targets, read_names_by_seq):
 # To have a reasonable upper limit, we also assume that 1/4 of each length is the maxmimal hamming distance. 
 # We compare the 10th percentile of  the dist list to i/4 and pick the smaller one as the max_ham_dists.
 ### --------------------------
-
-
 def get_max_ham_dists(min_len, max_len):
     dists = defaultdict(list)
     for _ in xrange(50000):
