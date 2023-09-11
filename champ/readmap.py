@@ -233,6 +233,16 @@ def determine_perfect_target_reads(targets, read_names_by_seq):
                 perfect_read_names += read_names
         yield target_name, perfect_read_names
 
+### ---------------------------
+ 
+# In this method, we try to determine the maximum possible hamming distance of each reads.
+# To achieve this, we create two random sequences (i.e., ref_seq and new_seq) having length equals to max_len.
+# We compare the hamming distance between these two sequences from min_len to 3' end, so that we can understand the effect of the sequence length to its possible numbers of errors.
+# This process repeats for 50000 to build a comprehansive error lists.
+# To have a reasonable upper limit, we also assume that 1/4 of each length is the maxmimal hamming distance. 
+# We compare the 10th percentile of  the dist list to i/4 and pick the smaller one as the max_ham_dists.
+### --------------------------
+
 
 def get_max_ham_dists(min_len, max_len):
     dists = defaultdict(list)
