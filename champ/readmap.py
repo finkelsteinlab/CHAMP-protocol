@@ -303,6 +303,8 @@ def classify_seq(rec1, rec2, min_len, max_len, max_ham_dists, log_p_struct):
     loc_max_len = min(max_len, len(seq1), len(seq2_rc))
 
     # Find aligning sequence, indels are not allowed, starts of reads included
+    # Here we check if the hamming distance between pair-end reads is smaller than max_ham.
+    # We only consider one signature length.
     sig_lens = [i for i, max_ham in zip(range(min_len, loc_max_len + 1), max_ham_dists)
                 if simple_hamming_distance(seq1[:i], seq2_rc[-i:]) < max_ham]
     if len(sig_lens) != 1:
