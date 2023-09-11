@@ -152,6 +152,15 @@ class FastqImageAligner(object):
         self.image_data.set_fft(self.fq_im_scaled_dims)
         self.control_corr = 0
 
+        
+        # Here we would like to link the tile number to its key so that we can print it later.
+        tile_num = {}
+        for key in possible_tile_keys:
+            for tile in possible_tiles:
+                if self.fastq_tiles[key] == tile:
+                    tile_num[tile] = key
+
+
         for control_tile in control_tiles:
             ### ----------------------
             # Here we perform FFT of control tiles and compute the cross-correlation value between TIFF images and the FASTQ tiles after FFT.
@@ -170,11 +179,15 @@ class FastqImageAligner(object):
             # If the max_corr passes the product of SNR and the control_corr, then it is considered as a successful rough alignment.
             # The tile number will then be documented as a hitting tile.
             ### ----------------------
+            
             max_corr, align_tr = tile.fft_align_with_im(self.image_data)
             if max_corr > snr_thresh * self.control_corr:
                 tile.set_aligned_rcs(align_tr)
                 tile.snr = max_corr / self.control_corr
                 self.hitting_tiles.append(tile)
+
+            # Display the in-process alignment information.
+            log.debug('tile# = {}, SNR = {}, control_corr = {}, max_corr = {}'.format(tile_num[tile], round(max_corr/self.control_corr, 2), round(self.control_corr, 2), round(max_corr, 2)))
 
     def find_points_in_frame(self, consider_tiles='all'):
         ### ----------------------
