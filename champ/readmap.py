@@ -313,12 +313,19 @@ def classify_seq(rec1, rec2, min_len, max_len, max_ham_dists, log_p_struct):
     seq2_len = sig_lens[0]
     seq2_match = seq2_rc[-seq2_len:]
     seq1_match = seq1[:seq2_len]
-
-    # Get corresponding quality scores
+    
+    # To build consensus sequences, we need to first consider the sequencing reads quality base-by-base.
+    # Therefore, we first get corresponding quality scores of the pair-end reads at each position.
     quals1 = rec1.letter_annotations['phred_quality'][:seq2_len]
     quals2 = rec2.letter_annotations['phred_quality'][::-1][-seq2_len:]
 
-    # Build consensus sequence
+    ### ----------------------------------
+    # To build consensus sequence, we need to consider several possible conditions:
+    # 1.  If the two bases (i.e., forward read and reverse read) have the same quality, we can directly accept the forward read.
+    # 2. If both of them have phred quality score > 2, we consider the combinatorial score of r1 by computing the overall probability of "r1 is read as r1" + "r1 is misread as r1, and should be r2", and perform the same computation to derive r2_score. If r1_score > r2_score, meaning that the nucleobase has higher chance being r1, we accept this read as r1, vice versa.
+    # 3. If either one is has no read (perhaps due to shorter read length) and the other one has phred quality score > 2, we accept the read.
+    # 4. If no conditions above is qualified, the sequence will be noted as "None".
+    ### ----------------------------------
     ML_bases = []
     for r1, q1, r2, q2 in zip(seq1_match, quals1, seq2_match, quals2):
         if r1 in bases and r1 == r2:
