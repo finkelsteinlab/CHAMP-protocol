@@ -258,6 +258,9 @@ def get_max_ham_dists(min_len, max_len):
 def determine_sequences_of_read_names(min_len, max_len, log_p_struct, fastq_files, usable_read):
     # --------------------------------------------------------------------------------
     # Pair fpaths and classify seqs
+    # We first paired the reads from the two fastq files. Since the reads in the fastq files follow the same order, we use izip to directly link the two reads.
+    # If the id does not follow user-defined requirements, it will not be defined as a usable_read (e.g., "2" for side2 only).
+    # Based on the pair-end readings, we can then classify the sequence using "classify_seq".
     # --------------------------------------------------------------------------------
     max_ham_dists = get_max_ham_dists(min_len, max_len)
     log.debug("Max ham dists: %s" % str(max_ham_dists))
