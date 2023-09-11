@@ -130,11 +130,14 @@ class FastqReadClassifier(object):
     def __init__(self, bowtie_path):
         clean_path = bowtie_path.rstrip(os.path.sep)
         self.name = os.path.basename(clean_path)
+        # Formulate part of the bowtie2 command to align pair-end fastq reads to chimp.sam
         self._common_command = ('bowtie2', '--local', '-p 15', '--no-unal', '-x %s' % clean_path)
-        self.home_path = os.environ['HOME'] # Define variable "home_path", so that we can save files to user-defined home_path. We are not able to save into the docker image since it is a read-only file.
-
+        
+        # Define variable "home_path", so that we can save files to user-defined home_path. We are not able to save into the docker image since it is a read-only file.
+        self.home_path = os.environ['HOME']
 
     def paired_call(self, fastq_file_1, fastq_file_2):
+        # Pass in the pair-end reads fastq files and output as a chimp.sam
         command = self._common_command + ('-1 ' + fastq_file_1,
                                           '-2 ' + fastq_file_2,
                                           '-S ' + os.path.join(self.home_path, 'chimp.sam'),
@@ -155,7 +158,8 @@ class FastqReadClassifier(object):
             final = os.path.join(self.home_path, 'final.bam')
             error = os.path.join(self.home_path, 'error.txt')
             final_bai = os.path.join(self.home_path, 'final.bam.bai')
-            sam_command = 'samtools view -bS {} | samtools sort {} -o {}'.format(chimp, chimp, final)
+            # Samtools first convert the SAM file into a BAM file and then sort the reads based on their genomic coordinates.
+            sam_command = 'samtools view -bS {} | samtools sort -o {}'.format(chimp, final)
             subprocess.call(sam_command, **shell_options)
             subprocess.call('samtools index {} {}'.format(final, final_bai), **shell_options)
             for r in pysam.Samfile(final):
