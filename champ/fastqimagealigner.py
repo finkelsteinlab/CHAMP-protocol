@@ -138,8 +138,6 @@ class FastqImageAligner(object):
             possible_tiles = [self.fastq_tiles[key] for key in possible_tile_keys
                               if key in self.fastq_tiles]
             
-        possible_tiles = [self.fastq_tiles[key] for key in possible_tile_keys
-                          if key in self.fastq_tiles]
         ### ----------------------
         # For the rough alignment, possible tiles are the half of the chip range.
         # The impossible tiles are simply the other half of the chip range. It is useful when computing the control alignment noise.
