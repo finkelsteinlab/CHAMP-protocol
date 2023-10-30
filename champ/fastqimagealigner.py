@@ -153,11 +153,10 @@ class FastqImageAligner(object):
         
         # Here we would like to link the tile number to its key so that we can print it later.
         tile_num = {}
-        for key in possible_tile_keys:
-            for tile in possible_tiles:
-                if self.fastq_tiles[key] == tile:
-                    tile_num[tile] = key
-
+        key_to_use = floor_possible_tile_keys if side1 else possible_tile_keys
+        for key in keys_to_use:
+            if self.fastq_tiles.get(key) in possible_tiles:
+                tile_num[self.fastq_tiles.get(key)] = key
 
         for control_tile in control_tiles:
             ### ----------------------
