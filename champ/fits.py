@@ -86,6 +86,8 @@ class SEConfig(object):
                 pass
 
     def _create_config_files(self):
+    ### Lowering the values in default_text is beneficial for high phiX coverage condition. It lowers the threshold for CHAMP program to identified clusters in TIFF images at first place during precision alignment. ###
+
         default_text = """DETECT_THRESH 2
 DEBLEND_NTHRESH 64
 DEBLEND_MINCONT 0.00005
